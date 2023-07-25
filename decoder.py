@@ -1,4 +1,5 @@
 import csv
+import math
 
 def readRecordsFromDB(fileName):
     records = {}
@@ -9,6 +10,11 @@ def readRecordsFromDB(fileName):
             records[id] = row
     return records
 
+def getIdByteLength(dict):
+    maxValue = max(dict.keys())
+    return math.ceil(math.log2(maxValue) / 8)
+
 ##########################################################################
 db = readRecordsFromDB('sample.db')
 print(db)
+print("Bytes needed for ID field: " + str(getIdByteLength(db)))
