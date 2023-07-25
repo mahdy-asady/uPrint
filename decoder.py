@@ -5,7 +5,7 @@ def readRecordsFromDB(fileName):
     with open(fileName, 'r') as csvFile:
         dataReader = csv.reader(csvFile)
         for row in dataReader:
-            id = row.pop(0)
+            id = int(row.pop(0))
             records[id] = row
     return records
 
