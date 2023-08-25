@@ -17,4 +17,5 @@ def getIdByteLength(dict):
 ##########################################################################
 db = readRecordsFromDB('sample.db')
 print(db)
-print("Bytes needed for ID field: " + str(getIdByteLength(db)))
+idLength = getIdByteLength(db)
+print("Bytes needed for ID field: " + str(idLength))
