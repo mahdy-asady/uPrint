@@ -12,6 +12,26 @@ def popN(byteList, n):
         data.append(byteList.pop(0))
     return data
 
+##########################################################################
+def _readStr(typeIndicator, byteList):
+    data = ""
+    while True:
+        char = byteList.pop(0)
+        if char == 0:
+            break
+        data += chr(char)
+    return data
+
+def _readDigit(typeIndicator, byteList):
+    num = popN(byteList, 4)
+    return int.from_bytes(num, 'little')
+
+readerfn = {
+    's':    _readStr,
+    'd':    _readDigit
+}
+
+##########################################################################
 
 def readRecordsFromDB(fileName):
     records = {}
@@ -29,15 +49,16 @@ def getIdByteLength(dict):
 def decryptMessage(encMsg, idLength, db):
     keyIndex = int.from_bytes(popN(encMsg, idLength), 'little')
     dbRecord = db[keyIndex]
-    print("Log Index: " + str(keyIndex))
-    print("Print Text: " + dbRecord.formatStr)
-    print(type(db[keyIndex]))
+    print(dbRecord.formatStr)
+    printArgs = ()
+    for s in dbRecord.specifiers:
+        printArgs += (readerfn[s[-1]](s[-1], encMsg),)
+    print(printArgs)
+    print(dbRecord.formatStr % printArgs)
 
 ##########################################################################
 db = readRecordsFromDB('sample.db')
-print(db)
 idLength = getIdByteLength(db)
-print("Bytes needed for ID field: " + str(idLength))
 
 sampleLog = bytearray(b'\x01\xFF\x00\x00\x00Salam\x00')
 decryptMessage(sampleLog, idLength, db)
