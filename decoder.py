@@ -1,6 +1,9 @@
 import csv
 import math
 import re
+from collections import namedtuple
+
+recordRow = namedtuple('Record', ['formatStr', 'specifiers'])
 
 
 def popN(byteList, n):
@@ -16,7 +19,7 @@ def readRecordsFromDB(fileName):
         dataReader = csv.reader(csvFile)
         for row in dataReader:
             id = int(row.pop(0))
-            records[id] = (row[0], re.findall(r'(%[^%])', row[0]))
+            records[id] = recordRow(row[0], re.findall(r'(%[^%])', row[0]))
     return records
 
 def getIdByteLength(dict):
@@ -25,8 +28,9 @@ def getIdByteLength(dict):
 
 def decryptMessage(encMsg, idLength, db):
     keyIndex = int.from_bytes(popN(encMsg, idLength), 'little')
+    dbRecord = db[keyIndex]
     print("Log Index: " + str(keyIndex))
-    print("Print Text: " + db[keyIndex][0])
+    print("Print Text: " + dbRecord.formatStr)
     print(type(db[keyIndex]))
 
 ##########################################################################
