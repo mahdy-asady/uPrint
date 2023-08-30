@@ -3,6 +3,13 @@ import math
 import re
 
 
+def popN(byteList, n):
+    data = bytearray()
+    for i in range(n):
+        data.append(byteList.pop(0))
+    return data
+
+
 def readRecordsFromDB(fileName):
     records = {}
     with open(fileName, 'r') as csvFile:
@@ -17,7 +24,7 @@ def getIdByteLength(dict):
     return math.ceil(math.log2(maxValue) / 8)
 
 def decryptMessage(encMsg, idLength, db):
-    keyIndex = encMsg.pop(0)
+    keyIndex = int.from_bytes(popN(encMsg, idLength), 'little')
     print("Log Index: " + str(keyIndex))
     print("Print Text: " + db[keyIndex][0])
     print(type(db[keyIndex]))
