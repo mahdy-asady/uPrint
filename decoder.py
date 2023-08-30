@@ -4,7 +4,7 @@ import re
 from collections import namedtuple
 
 recordRow = namedtuple('Record', ['formatStr', 'specifiers'])
-
+formatModifiers = namedtuple('formatModifiers', ['flags', 'width', 'precision', 'length', 'specifier'])
 
 def popN(byteList, n):
     data = bytearray()
@@ -13,7 +13,7 @@ def popN(byteList, n):
     return data
 
 ##########################################################################
-def _readStr(typeIndicator, byteList):
+def _readStr(typeSpecifiers, byteList):
     data = ""
     while True:
         char = byteList.pop(0)
@@ -22,7 +22,7 @@ def _readStr(typeIndicator, byteList):
         data += chr(char)
     return data
 
-def _readDigit(typeIndicator, byteList):
+def _readDigit(typeSpecifiers, byteList):
     num = popN(byteList, 4)
     return int.from_bytes(num, 'little')
 
@@ -39,7 +39,9 @@ def readRecordsFromDB(fileName):
         dataReader = csv.reader(csvFile)
         for row in dataReader:
             id = int(row.pop(0))
-            records[id] = recordRow(row[0], re.findall(r'(%[^%])', row[0]))
+            # Regex credit belongs to zak @ https://regex101.com/library/rV5bO9?amp%3Bpage=7&orderBy=MOST_POINTS&page=78
+            formatSpecifiers = [formatModifiers(*item) for item in re.findall(r'%([-+#0])?(\d+|\*)?(?:\.(\d+|\*))?([hljztL]|hh|ll)?([diuoxXfFeEgGaAcspn])', row[0])]
+            records[id] = recordRow(row[0], formatSpecifiers)
     return records
 
 def getIdByteLength(dict):
@@ -52,7 +54,8 @@ def decryptMessage(encMsg, idLength, db):
     print(dbRecord.formatStr)
     printArgs = ()
     for s in dbRecord.specifiers:
-        printArgs += (readerfn[s[-1]](s[-1], encMsg),)
+        specifier = s.specifier
+        printArgs += (readerfn[specifier](s, encMsg),)
     print(printArgs)
     print(dbRecord.formatStr % printArgs)
 
