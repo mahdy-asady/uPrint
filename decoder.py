@@ -26,7 +26,14 @@ def _readStr(typeSpecifiers, byteList):
     return data
 
 def _readDigit(typeSpecifiers, byteList):
-    num = popN(byteList, 4)
+    length = 0
+    match typeSpecifiers.length:
+        case 'l':
+            length = dataTypeConfig.longInt
+        case _:
+            length = dataTypeConfig.int
+
+    num = popN(byteList, length)
     return int.from_bytes(num, 'little')
 
 readerfn = {
