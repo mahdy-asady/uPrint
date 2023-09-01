@@ -2,12 +2,19 @@ import csv
 import math
 import re
 from collections import namedtuple
+from enum import Enum
 
 recordRow = namedtuple('Record', ['formatStr', 'specifiers'])
 formatModifiers = namedtuple('formatModifiers', ['flags', 'width', 'precision', 'length', 'specifier'])
+
 dataTypeConfigTuple = namedtuple('dataTypeConfigTuple', ['shortInt', 'int', 'longInt', 'float', 'double', 'longDouble'])
 dataTypeConfig = dataTypeConfigTuple(2,4,4,4,8,10)
+
+endianTuple = Enum('endianTuple', ['littleEndian', 'bigEndian'], start=0)
+endian = endianTuple.littleEndian
+
 dbVersion = 0
+
 
 def popN(byteList, n):
     data = bytearray()
@@ -26,6 +33,7 @@ def _readStr(typeSpecifiers, byteList):
     return data
 
 def _readDigit(typeSpecifiers, byteList):
+    global endian
     length = 0
     match typeSpecifiers.length:
         case 'l':
@@ -34,7 +42,7 @@ def _readDigit(typeSpecifiers, byteList):
             length = dataTypeConfig.int
 
     num = popN(byteList, length)
-    return int.from_bytes(num, 'little')
+    return int.from_bytes(num, 'little' if endian == endianTuple.littleEndian else 'big')
 
 readerfn = {
     's':    _readStr,
@@ -44,12 +52,13 @@ readerfn = {
 ##########################################################################
 
 def readRecordsFromDB(fileName):
-    global dataTypeConfig, dbVersion
+    global dataTypeConfig, dbVersion, endian
     records = {}
     with open(fileName, 'r') as csvFile:
         dataReader = csv.reader(csvFile)
         config = list(map(int, next(dataReader)))
         dbVersion = config.pop(0)
+        endian = endianTuple(config.pop(0))
         dataTypeConfig = dataTypeConfigTuple(*config)
         for row in dataReader:
             id = int(row.pop(0))
