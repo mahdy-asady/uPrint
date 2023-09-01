@@ -5,6 +5,9 @@ from collections import namedtuple
 
 recordRow = namedtuple('Record', ['formatStr', 'specifiers'])
 formatModifiers = namedtuple('formatModifiers', ['flags', 'width', 'precision', 'length', 'specifier'])
+dataTypeConfigTuple = namedtuple('dataTypeConfigTuple', ['shortInt', 'int', 'longInt', 'float', 'double', 'longDouble'])
+dataTypeConfig = dataTypeConfigTuple(2,4,4,4,8,10)
+dbVersion = 0
 
 def popN(byteList, n):
     data = bytearray()
@@ -34,9 +37,13 @@ readerfn = {
 ##########################################################################
 
 def readRecordsFromDB(fileName):
+    global dataTypeConfig, dbVersion
     records = {}
     with open(fileName, 'r') as csvFile:
         dataReader = csv.reader(csvFile)
+        config = list(map(int, next(dataReader)))
+        dbVersion = config.pop(0)
+        dataTypeConfig = dataTypeConfigTuple(*config)
         for row in dataReader:
             id = int(row.pop(0))
             # Regex credit belongs to zak @ https://regex101.com/library/rV5bO9?amp%3Bpage=7&orderBy=MOST_POINTS&page=78
