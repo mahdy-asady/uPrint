@@ -74,17 +74,15 @@ def getIdByteLength(dict):
 def decryptMessage(encMsg, idLength, db):
     keyIndex = int.from_bytes(popN(encMsg, idLength), 'little')
     dbRecord = db[keyIndex]
-    print(dbRecord.formatStr)
     printArgs = ()
     for s in dbRecord.specifiers:
         specifier = s.specifier
         printArgs += (readerfn[specifier](s, encMsg),)
-    print(printArgs)
-    print(dbRecord.formatStr % printArgs)
+    return (dbRecord.formatStr % printArgs)
 
 ##########################################################################
 db = readRecordsFromDB('sample.db')
 idLength = getIdByteLength(db)
 
 sampleLog = bytearray(b'\x01\xFF\x00\x00\x00Salam\x00')
-decryptMessage(sampleLog, idLength, db)
+print(decryptMessage(sampleLog, idLength, db))
