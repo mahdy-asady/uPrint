@@ -24,5 +24,10 @@ uPrint.so: $(PLUGIN_SOURCE_FILES)
 install: uPrint.so
 	sudo cp $(shell pwd)/uPrint.so $(GCC_PLUGINS_DIR)/uPrint.so
 
+test:
+	gcc test.c -fplugin=uPrint -o bin
+	- ./bin
+	@rm bin
+
 clean: 
 	rm -f uPrint.so
