@@ -4,14 +4,20 @@
 // GCC GPL Compatibile verification signature
 int plugin_is_GPL_compatible;
 
-#define PLUGIN_NAME     "uPrint"
+/**
+ * Name of this plugin
+ */
+#define PLUGIN_NAME         "uPrint"
 
+/**
+ * Version of this plugin
+ */
+#define PLUGIN_VERSION      "0.1"
 
 /* Additional information about the plugin. Used by --help and --version. */
-static struct plugin_info pluginRegisterInfo =
-{
-	.version = "0.1",
-	.help = "Not implemented yet!",
+static struct plugin_info pluginRegisterInfo = {
+    .version = PLUGIN_VERSION,
+    .help    = "This plugin converts formatted output to binary output.",
 };
 
 int plugin_init ( struct plugin_name_args *pluginInfo, struct plugin_gcc_version *version) {
