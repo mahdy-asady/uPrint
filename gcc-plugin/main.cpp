@@ -23,6 +23,11 @@ static struct plugin_info pluginRegisterInfo = {
     .help    = "This plugin converts formatted output to binary output.",
 };
 
+
+#define INTERFACE_FN_NAME   "uPrint"
+
+#define OUTPUT_FN_NAME      "output"
+
 // -----------------------------------------------------------------------------
 // GCC EXTERNAL DECLARATION
 // -----------------------------------------------------------------------------
@@ -89,6 +94,28 @@ public:
         return true;
     }
 
+    void replace_print_fn(gimple* curr_stmt) {
+        // build function prototype
+        tree proto = build_function_type_list(
+                void_type_node,             // return type
+                NULL_TREE                   // varargs terminator
+            );
+
+        // builds and returns function declaration with NAME and PROTOTYPE
+        tree decl = build_fn_decl(OUTPUT_FN_NAME, proto);
+
+        // build the GIMPLE function call to decl
+        gcall* call = gimple_build_call(decl, 0);
+
+        // get an iterator pointing to first basic block of the statement
+        gimple_stmt_iterator gsi = gsi_for_stmt(curr_stmt);
+
+        gsi_replace(&gsi, call, true);
+
+        // insert it before the statement that was passed as the first argument
+        // gsi_insert_before(&gsi, call, GSI_NEW_STMT);
+    }
+
     /**
      * This is the code to run when pass is executed
      * @note Defined in opt_pass father class
@@ -111,8 +138,10 @@ public:
                 if (is_gimple_call(stmt)) {
                     tree function_name = gimple_call_fndecl(stmt);
                     if (function_name) {
-                        const char *name = IDENTIFIER_POINTER(DECL_NAME(function_name));
-                        printf("==> Call: %s\n", name);
+                        const char *name_str = IDENTIFIER_POINTER(DECL_NAME(function_name));
+                        if(strcmp(name_str, INTERFACE_FN_NAME) == 0) {
+                            replace_print_fn(stmt);
+                        }
                     }
                 }
             }

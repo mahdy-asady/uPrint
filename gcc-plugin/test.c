@@ -3,7 +3,7 @@
 
 void output()
 {
-    printf("Do something here!\n");
+    printf("I am the replaced function!\n");
 }
 
 int f1() {
@@ -13,9 +13,9 @@ int f1() {
 void f2()
 {
     if(f1() == 1)
-        sampleFn("Sample function f2() true condition call\n");
+        uPrint("Sample function f2() true condition call\n");
     else 
-        sampleFn("Sample function f2() false condition call\n");
+        uPrint("Sample function f2() false condition call\n");
     return;
 }
 
