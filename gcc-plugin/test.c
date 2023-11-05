@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include "uPrint.h"
 
 
-void output()
+void output(int count, unsigned char *data)
 {
     printf("I am the replaced function!\n");
 }
@@ -13,9 +14,9 @@ int f1() {
 void f2()
 {
     if(f1() == 1)
-        uPrint("Sample function f2() true condition call\n");
+        uPrint(&output, "Sample function f2() true condition call\n");
     else 
-        uPrint("Sample function f2() false condition call\n");
+        uPrint(&output, "Sample function f2() false condition call\n");
     return;
 }
 
@@ -28,6 +29,9 @@ void f3()
         f3();
     else 
         f2();
+
+    uPrint(&output, "Sample text %d, %d", a + 10, 20);
+    // convert (1, 2, a + 10, 3, 20);
     return;
 }
 

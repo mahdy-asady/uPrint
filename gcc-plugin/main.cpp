@@ -26,7 +26,7 @@ static struct plugin_info pluginRegisterInfo = {
 
 #define INTERFACE_FN_NAME   "uPrint"
 
-#define OUTPUT_FN_NAME      "output"
+#define OUTPUT_FN_NAME      "uPrintHelper"
 
 // -----------------------------------------------------------------------------
 // GCC EXTERNAL DECLARATION
