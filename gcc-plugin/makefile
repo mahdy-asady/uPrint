@@ -16,13 +16,13 @@ CXXFLAGS+= -I$(GCC_PLUGINS_DIR)/include -fPIC -fno-rtti
 # our recipes
 .PHONY: all clean test
 
-all: uPrint.so
+all: bin/uPrint.so
 
-uPrint.so: $(PLUGIN_SOURCE_FILES)
+bin/uPrint.so: $(PLUGIN_SOURCE_FILES)
 	$(HOST_GCC) -shared $(CXXFLAGS) $^ -o $@
 
-install: uPrint.so
-	sudo cp $(shell pwd)/uPrint.so $(GCC_PLUGINS_DIR)/uPrint.so
+install: bin/uPrint.so
+	sudo cp $(shell pwd)/$^ $(GCC_PLUGINS_DIR)/uPrint.so
 
 test:
 	gcc test.c -fplugin=uPrint -o bin
@@ -30,4 +30,4 @@ test:
 	@rm bin
 
 clean: 
-	rm -f uPrint.so
+	rm -f bin/*
