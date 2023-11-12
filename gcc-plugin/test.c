@@ -4,7 +4,7 @@
 
 void output(int count, unsigned char *data)
 {
-    printf("I am the replaced function!\n");
+    printf("%s", data);
 }
 
 int f1() {

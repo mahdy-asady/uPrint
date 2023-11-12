@@ -104,16 +104,8 @@ public:
         // builds and returns function declaration with NAME and PROTOTYPE
         tree decl = build_fn_decl(OUTPUT_FN_NAME, proto);
 
-        // build the GIMPLE function call to decl
-        gcall* call = gimple_build_call(decl, 0);
-
-        // get an iterator pointing to first basic block of the statement
-        gimple_stmt_iterator gsi = gsi_for_stmt(curr_stmt);
-
-        gsi_replace(&gsi, call, true);
-
-        // insert it before the statement that was passed as the first argument
-        // gsi_insert_before(&gsi, call, GSI_NEW_STMT);
+        // Replace call function
+        gimple_call_set_fndecl(curr_stmt, decl);
     }
 
     /**
