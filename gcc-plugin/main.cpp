@@ -123,11 +123,17 @@ public:
         tree decl = build_fn_decl(OUTPUT_FN_NAME, proto);
 
 
-        uint8_t recordID = saveFormatStringToDb(gimple_call_arg(curr_stmt, 1));
 
 
         // Replace call function
         gimple_call_set_fndecl(curr_stmt, decl);
+
+        // Save formatString to database
+        uint8_t recordId = saveFormatStringToDb(gimple_call_arg(curr_stmt, 1));
+
+        // Replace first argument
+        tree recordIdArg = build_int_cst(NULL_TREE, recordId);
+        gimple_call_set_arg(curr_stmt,1, recordIdArg);
 
         fprintf(stderr, "   *** After: "); print_gimple_stmt(stderr, curr_stmt, 0, TDF_NONE);
         fprintf(stderr, "--------------------------------------------------\n");
