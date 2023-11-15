@@ -99,6 +99,17 @@ public:
         return true;
     }
 
+
+    uint8_t saveFormatStringToDb(tree Param) {
+        static uint8_t num = 1;
+        tree node = TREE_OPERAND (Param, 0);
+        if (unsigned nbytes = TREE_STRING_LENGTH (node)) {
+            printf("STR id: %d: %s\n", num, TREE_STRING_POINTER (node));
+        }
+        return num++;
+    }
+
+
     void replace_print_fn(gimple* curr_stmt) {
         fprintf(stderr, "   *** Before: "); print_gimple_stmt(stderr, curr_stmt, 0, TDF_NONE);
 
@@ -110,6 +121,10 @@ public:
 
         // builds and returns function declaration with NAME and PROTOTYPE
         tree decl = build_fn_decl(OUTPUT_FN_NAME, proto);
+
+
+        uint8_t recordID = saveFormatStringToDb(gimple_call_arg(curr_stmt, 1));
+
 
         // Replace call function
         gimple_call_set_fndecl(curr_stmt, decl);
