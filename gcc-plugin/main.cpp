@@ -71,6 +71,11 @@ struct pass_data ins_pass_data =
     .todo_flags_finish = TODO_update_ssa|TODO_cleanup_cfg   // need to update SSA repr after and repair cfg
 };
 
+
+extern void print_gimple_stmt(FILE * file, gimple* g, int spc, dump_flags_t flags);
+
+
+
 /**
  * Definition of our instrumentation GIMPLE pass
  * @note Extends gimple_opt_pass class
@@ -95,6 +100,8 @@ public:
     }
 
     void replace_print_fn(gimple* curr_stmt) {
+        fprintf(stderr, "   *** Before: "); print_gimple_stmt(stderr, curr_stmt, 0, TDF_NONE);
+
         // build function prototype
         tree proto = build_function_type_list(
                 void_type_node,             // return type
@@ -106,6 +113,9 @@ public:
 
         // Replace call function
         gimple_call_set_fndecl(curr_stmt, decl);
+
+        fprintf(stderr, "   *** After: "); print_gimple_stmt(stderr, curr_stmt, 0, TDF_NONE);
+        fprintf(stderr, "--------------------------------------------------\n");
     }
 
     /**
