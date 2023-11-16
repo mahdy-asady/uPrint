@@ -40,5 +40,5 @@ int main()
     printf("I'm a target C program.\n");
     f3();
     f2();
-    return 1;
+    return 0;
 }

@@ -33,7 +33,7 @@ bin/libuPrint.o: $(LIBRARY_SOURCE_FILES)
 
 test:
 	gcc test.c -Lbin -fplugin=uPrint -luPrint -o bin/test
-	- ./bin/test
+	./bin/test
 
 clean: 
 	rm -f bin/*
