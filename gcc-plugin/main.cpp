@@ -110,8 +110,55 @@ public:
     }
 
 
+    char *generateFormatString(gimple* stmt, int *length) {
+        int arg_count = gimple_call_num_args(stmt) - 2;
+        *length = arg_count + 1;
+        char *format_str = XNEWVEC(char, *length);
+
+        for(int i = 0; i < arg_count; i++) {
+
+        }
+        memset(format_str, '0', arg_count);
+
+        format_str[arg_count] ='\0';
+        return format_str;
+
+    }
+
+
     void replace_print_fn(gimple* curr_stmt) {
         fprintf(stderr, "   *** Before: "); print_gimple_stmt(stderr, curr_stmt, 0, TDF_NONE);
+
+        int fmt_length;
+        vec<tree> args;
+
+        // We have 3 arguments at minimum
+        args.create(3);
+
+        // Save format string to database & get Its ID
+        uint8_t recordId = saveFormatStringToDb(gimple_call_arg(curr_stmt, 1));
+
+        // Generate custom format string
+        char *fmt_str = generateFormatString(curr_stmt, &fmt_length);
+
+        // Transfer first argument(pointer of callback) as is
+        args.safe_push(gimple_call_arg(curr_stmt, 0));
+
+        // Set second arg
+        tree recordIdArg = build_int_cst(NULL_TREE, recordId);
+        args.safe_push(recordIdArg);
+
+        // Set third arg
+        tree fmt_arg = build_string_literal(fmt_length, fmt_str);
+        XDELETEVEC(fmt_str);
+        args.safe_push(fmt_arg);
+
+
+        int arg_count = gimple_call_num_args(curr_stmt) - 2;
+
+        for(int i = 0; i < arg_count; i++) {
+            args.safe_push(gimple_call_arg(curr_stmt, i + 2));
+        }
 
         // build function prototype
         tree proto = build_function_type_list(
@@ -122,20 +169,16 @@ public:
         // builds and returns function declaration with NAME and PROTOTYPE
         tree decl = build_fn_decl(OUTPUT_FN_NAME, proto);
 
+        // tree decl = builtin_decl_implicit (as_builtin_fn (fn));
+        gcall *stmt = gimple_build_call_vec (decl, args);
 
+        gimple_stmt_iterator gsi = gsi_for_stmt(curr_stmt);
 
+        gsi_replace(&gsi, stmt, true);
 
-        // Replace call function
-        gimple_call_set_fndecl(curr_stmt, decl);
+        args.release();
 
-        // Save formatString to database
-        uint8_t recordId = saveFormatStringToDb(gimple_call_arg(curr_stmt, 1));
-
-        // Replace first argument
-        tree recordIdArg = build_int_cst(NULL_TREE, recordId);
-        gimple_call_set_arg(curr_stmt,1, recordIdArg);
-
-        fprintf(stderr, "   *** After: "); print_gimple_stmt(stderr, curr_stmt, 0, TDF_NONE);
+        fprintf(stderr, "   *** After: "); print_gimple_stmt(stderr, stmt, 0, TDF_NONE);
         fprintf(stderr, "--------------------------------------------------\n");
     }
 
