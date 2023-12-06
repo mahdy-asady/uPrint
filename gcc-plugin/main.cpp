@@ -4,6 +4,8 @@
 #include <tree-pass.h>
 #include <gimple-iterator.h>
 
+#include <print-tree.h>
+
 // GCC GPL Compatibile verification signature
 int plugin_is_GPL_compatible;
 
@@ -115,14 +117,51 @@ public:
         *length = arg_count + 1;
         char *format_str = XNEWVEC(char, *length);
 
-        for(int i = 0; i < arg_count; i++) {
+        // Set default place holder
+        memset(format_str, ' ', arg_count);
 
+        for(int i = 0; i < arg_count; i++) {
+            tree arg = gimple_call_arg(stmt, i + 2);
+            enum tree_code arg_code = TREE_CODE (arg);
+
+            switch (arg_code)
+            {
+                // Variables
+                case SSA_NAME:
+                    {
+                        tree arg_type = TREE_TYPE(arg);
+                        enum tree_code type_code = TREE_CODE (arg_type);
+                        // Integer type variable
+                        if(type_code == INTEGER_TYPE) {
+                            tree size_unit = TYPE_SIZE_UNIT(arg_type);
+                            format_str[i] = '0' + *(wi::to_wide(size_unit).get_val());
+                        }
+                    }
+                    break;
+
+                case INTEGER_CST:
+                    {
+                        tree arg_type = TREE_TYPE(arg);
+                        tree size_unit = TYPE_SIZE_UNIT(arg_type);
+                        format_str[i] = '0' + *(wi::to_wide(size_unit).get_val());
+                    }
+                    break;
+
+                // Address reference. Shall we treat it only as string pointer?
+                case ADDR_EXPR:
+                    format_str[i] = '0';
+                    break;
+
+                default:
+                    fprintf(stderr, "*********************************************************\n");
+                    fprintf(stderr, "Unknown Variable type (%d)!\nDebug Info:\n", arg_code);
+                    debug_tree(arg);
+                    fprintf(stderr, "*********************************************************\n");
+            }
         }
-        memset(format_str, '0', arg_count);
 
         format_str[arg_count] ='\0';
         return format_str;
-
     }
 
 
