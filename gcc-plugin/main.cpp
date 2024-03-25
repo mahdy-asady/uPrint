@@ -111,7 +111,16 @@ public:
         return num++;
     }
 
-
+    /**
+     * @brief Generates format string used in uPrintHelper() to generate data stream.
+     * The format string is just a string variable that stores length of each variable. 
+     * For example in a particular system, int may stored in 4 bytes, so we will place '4' in its place to show that when picking data, pick 4 bytes.
+     * For string (char *) variables we set it place holder as '0' that shows it is a string pointer
+     * 
+     * @param stmt 
+     * @param length 
+     * @return char* 
+     */
     char *generateFormatString(gimple* stmt, int *length) {
         int arg_count = gimple_call_num_args(stmt) - 2;
         *length = arg_count + 1;
