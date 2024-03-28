@@ -172,34 +172,36 @@ public:
         return (arg_count + 1);
     }
 
-
+    /**
+     * @brief Replace call for uPrint() with a call to uPrintHelper()
+     * 
+     * @param curr_stmt: The function call statement
+     */
     void replace_print_fn(gimple* curr_stmt) {
         char *fmt_str;
         int fmt_length;
         vec<tree> args;
 
-        // We have 3 arguments at minimum
+        // We have 3 arguments at minimum, Callback function, db record ID & format string
         args.create(3);
-
-        // Save format string to database & get Its ID
-        uint8_t recordId = saveFormatStringToDb(gimple_call_arg(curr_stmt, 1));
-
-        // Generate custom format string
-        fmt_length = generateFormatString(curr_stmt, &fmt_str);
 
         // Transfer first argument(pointer of callback) as is
         args.safe_push(gimple_call_arg(curr_stmt, 0));
 
+        // Save format string to database & get Its ID
+        uint8_t recordId = saveFormatStringToDb(gimple_call_arg(curr_stmt, 1));
         // Set second arg
         tree recordIdArg = build_int_cst(NULL_TREE, recordId);
         args.safe_push(recordIdArg);
 
+        // Generate custom format string
+        fmt_length = generateFormatString(curr_stmt, &fmt_str);
         // Set third arg
         tree fmt_arg = build_string_literal(fmt_length, fmt_str);
-        XDELETEVEC(fmt_str);
         args.safe_push(fmt_arg);
+        XDELETEVEC(fmt_str);
 
-
+        // Find all remaining args from uPrint() call & push them to list of arguments
         int arg_count = gimple_call_num_args(curr_stmt) - 2;
 
         for(int i = 0; i < arg_count; i++) {
