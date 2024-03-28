@@ -118,16 +118,15 @@ public:
      * For string (char *) variables we set it place holder as '0' that shows it is a string pointer
      * 
      * @param stmt 
-     * @param length 
-     * @return char* 
+     * @param format_str: returning format string
+     * @return int length of format string
      */
-    char *generateFormatString(gimple* stmt, int *length) {
+    int generateFormatString(gimple* stmt, char **format_str) {
         int arg_count = gimple_call_num_args(stmt) - 2;
-        *length = arg_count + 1;
-        char *format_str = XNEWVEC(char, *length);
+        *format_str = XNEWVEC(char, arg_count + 1);
 
         // Set default place holder
-        memset(format_str, ' ', arg_count);
+        memset(*format_str, ' ', arg_count);
 
         for(int i = 0; i < arg_count; i++) {
             tree arg = gimple_call_arg(stmt, i + 2);
@@ -143,7 +142,7 @@ public:
                         // Integer type variable
                         if(type_code == INTEGER_TYPE) {
                             tree size_unit = TYPE_SIZE_UNIT(arg_type);
-                            format_str[i] = '0' + *(wi::to_wide(size_unit).get_val());
+                            (*format_str)[i] = '0' + *(wi::to_wide(size_unit).get_val());
                         }
                     }
                     break;
@@ -152,13 +151,13 @@ public:
                     {
                         tree arg_type = TREE_TYPE(arg);
                         tree size_unit = TYPE_SIZE_UNIT(arg_type);
-                        format_str[i] = '0' + *(wi::to_wide(size_unit).get_val());
+                        (*format_str)[i] = '0' + *(wi::to_wide(size_unit).get_val());
                     }
                     break;
 
                 // Address reference. Shall we treat it only as string pointer?
                 case ADDR_EXPR:
-                    format_str[i] = '0';
+                    (*format_str)[i] = '0';
                     break;
 
                 default:
@@ -169,14 +168,13 @@ public:
             }
         }
 
-        format_str[arg_count] ='\0';
-        return format_str;
+        (*format_str)[arg_count] ='\0';
+        return (arg_count + 1);
     }
 
 
     void replace_print_fn(gimple* curr_stmt) {
-        fprintf(stderr, "   *** Before: "); print_gimple_stmt(stderr, curr_stmt, 0, TDF_NONE);
-
+        char *fmt_str;
         int fmt_length;
         vec<tree> args;
 
@@ -187,7 +185,7 @@ public:
         uint8_t recordId = saveFormatStringToDb(gimple_call_arg(curr_stmt, 1));
 
         // Generate custom format string
-        char *fmt_str = generateFormatString(curr_stmt, &fmt_length);
+        fmt_length = generateFormatString(curr_stmt, &fmt_str);
 
         // Transfer first argument(pointer of callback) as is
         args.safe_push(gimple_call_arg(curr_stmt, 0));
@@ -225,9 +223,6 @@ public:
         gsi_replace(&gsi, stmt, true);
 
         args.release();
-
-        fprintf(stderr, "   *** After: "); print_gimple_stmt(stderr, stmt, 0, TDF_NONE);
-        fprintf(stderr, "--------------------------------------------------\n");
     }
 
     /**
