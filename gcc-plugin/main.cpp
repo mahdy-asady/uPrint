@@ -1,3 +1,4 @@
+#include <cstring>
 #include <gcc-plugin.h>
 #include <tree.h>
 #include <gimple.h>
@@ -29,6 +30,14 @@ static struct plugin_info pluginRegisterInfo = {
 #define INTERFACE_FN_NAME   "uPrint"
 
 #define OUTPUT_FN_NAME      "uPrintHelper"
+
+#define DB_FILE_NAME        "uPrint_db.csv"
+
+typedef uint8_t record_id_type;
+
+FILE *db_file;
+
+record_id_type db_record_id = 0;
 
 // -----------------------------------------------------------------------------
 // GCC EXTERNAL DECLARATION
@@ -102,13 +111,24 @@ public:
     }
 
 
-    uint8_t saveFormatStringToDb(tree Param) {
-        static uint8_t num = 1;
+    /**
+     * @brief Saves formatting string to database. For now we will store length of each passed variable alongside
+     * 
+     * @param Param 
+     * @param byte_specifiers
+     * @return record_id_type 
+     */
+    record_id_type save_format_str_to_db(tree Param, char *byte_specifiers) {
         tree node = TREE_OPERAND (Param, 0);
         if (unsigned nbytes = TREE_STRING_LENGTH (node)) {
-            printf("STR id: %d: %s\n", num, TREE_STRING_POINTER (node));
+            db_record_id += 1;
+            const char *fmt_str = TREE_STRING_POINTER(node);
+            char record_line[strlen(fmt_str) + strlen(byte_specifiers) + 7];
+            sprintf(record_line, "\"%s\",\"%s\"\n", fmt_str, byte_specifiers);
+            fputs(record_line, db_file);
+            return db_record_id;
         }
-        return num++;
+        return 0;
     }
 
     /**
@@ -188,14 +208,13 @@ public:
         // Transfer first argument(pointer of callback) as is
         args.safe_push(gimple_call_arg(curr_stmt, 0));
 
-        // Save format string to database & get Its ID
-        uint8_t recordId = saveFormatStringToDb(gimple_call_arg(curr_stmt, 1));
-        // Set second arg
-        tree recordIdArg = build_int_cst(NULL_TREE, recordId);
-        args.safe_push(recordIdArg);
-
         // Generate custom format string
         fmt_length = generateFormatString(curr_stmt, &fmt_str);
+
+        // Save format string to database & get Its ID, then set it as second argument of function call
+        record_id_type record_id = save_format_str_to_db(gimple_call_arg(curr_stmt, 1), fmt_str);
+        args.safe_push(build_int_cst(NULL_TREE, record_id));
+
         // Set third arg
         tree fmt_arg = build_string_literal(fmt_length, fmt_str);
         args.safe_push(fmt_arg);
@@ -271,6 +290,16 @@ ins_gimple_pass inst_pass = ins_gimple_pass(ins_pass_data, g);
 // -----------------------------------------------------------------------------
 
 /**
+ * @brief This function just closes db file.
+ * 
+ * @param gcc_data 
+ * @param user_data 
+ */
+void plugin_deinit(void *gcc_data, void *user_data) {
+    fclose(db_file);
+}
+
+/**
  * Initializes the plugin. Returns 0 if initialization finishes successfully.
  */
 int plugin_init ( struct plugin_name_args *pluginInfo, struct plugin_gcc_version *version) {
@@ -278,6 +307,24 @@ int plugin_init ( struct plugin_name_args *pluginInfo, struct plugin_gcc_version
 	register_callback(PLUGIN_NAME, PLUGIN_INFO, NULL, &pluginRegisterInfo);
 
 	printf("%s plugin v%s loaded!\n", PLUGIN_NAME, pluginRegisterInfo.version);
+
+    db_file = fopen(DB_FILE_NAME, "a+");
+
+    if (db_file == NULL) {
+        printf("Error opening database file %s.\n", DB_FILE_NAME);
+        return 1;
+    }
+
+    fseek(db_file, 0, SEEK_SET);
+    char ch;
+    while ((ch = fgetc(db_file)) != EOF) {
+        if (ch == '\n') {
+            db_record_id++;
+        }
+    }
+
+    // add our deinit function call
+    register_callback(PLUGIN_NAME, PLUGIN_FINISH, plugin_deinit,NULL);
 
 
     // new pass that will be registered

@@ -32,7 +32,8 @@ bin/libuPrint.o: $(LIBRARY_SOURCE_FILES)
 	rm bin/libuPrint.o
 
 test:
-	gcc test.c -Lbin -fplugin=uPrint -luPrint -o bin/test
+	rm uPrint_db.csv
+	gcc test.c test1.c -Lbin -fplugin=uPrint -luPrint -o bin/test
 	./bin/test
 
 clean: 

@@ -1,2 +1,3 @@
 .vscode
 gcc-plugin/bin
+gcc-plugin/uPrint_db.csv
