@@ -138,15 +138,15 @@ public:
      * For string (char *) variables we set it place holder as '0' that shows it is a string pointer
      * 
      * @param stmt 
-     * @param format_str: returning format string
+     * @param specifier_str: returning format string
      * @return int length of format string
      */
-    int generateFormatString(gimple* stmt, char **format_str) {
+    int generate_byte_specifiers(gimple* stmt, char **specifier_str) {
         int arg_count = gimple_call_num_args(stmt) - 2;
-        *format_str = XNEWVEC(char, arg_count + 1);
+        *specifier_str = XNEWVEC(char, arg_count + 1);
 
         // Set default place holder
-        memset(*format_str, ' ', arg_count);
+        memset(*specifier_str, ' ', arg_count);
 
         for(int i = 0; i < arg_count; i++) {
             tree arg = gimple_call_arg(stmt, i + 2);
@@ -162,7 +162,7 @@ public:
                         // Integer type variable
                         if(type_code == INTEGER_TYPE) {
                             tree size_unit = TYPE_SIZE_UNIT(arg_type);
-                            (*format_str)[i] = '0' + *(wi::to_wide(size_unit).get_val());
+                            (*specifier_str)[i] = '0' + *(wi::to_wide(size_unit).get_val());
                         }
                     }
                     break;
@@ -171,13 +171,13 @@ public:
                     {
                         tree arg_type = TREE_TYPE(arg);
                         tree size_unit = TYPE_SIZE_UNIT(arg_type);
-                        (*format_str)[i] = '0' + *(wi::to_wide(size_unit).get_val());
+                        (*specifier_str)[i] = '0' + *(wi::to_wide(size_unit).get_val());
                     }
                     break;
 
                 // Address reference. Shall we treat it only as string pointer?
                 case ADDR_EXPR:
-                    (*format_str)[i] = '0';
+                    (*specifier_str)[i] = '0';
                     break;
 
                 default:
@@ -188,7 +188,7 @@ public:
             }
         }
 
-        (*format_str)[arg_count] ='\0';
+        (*specifier_str)[arg_count] ='\0';
         return (arg_count + 1);
     }
 
@@ -209,7 +209,7 @@ public:
         args.safe_push(gimple_call_arg(curr_stmt, 0));
 
         // Generate custom format string
-        fmt_length = generateFormatString(curr_stmt, &fmt_str);
+        fmt_length = generate_byte_specifiers(curr_stmt, &fmt_str);
 
         // Save format string to database & get Its ID, then set it as second argument of function call
         record_id_type record_id = save_format_str_to_db(gimple_call_arg(curr_stmt, 1), fmt_str);
