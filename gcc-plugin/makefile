@@ -29,10 +29,10 @@ install: bin/uPrint.so
 bin/libuPrint.o: $(LIBRARY_SOURCE_FILES)
 	gcc -c -Wall -Werror -fpic $^ -o bin/libuPrint.o
 	ar rcs bin/libuPrint.a bin/libuPrint.o
-	rm bin/libuPrint.o
+	rm -f bin/libuPrint.o
 
 test:
-	rm uPrint_db.csv
+	rm -f uPrint_db.csv
 	gcc test.c test1.c -Lbin -fplugin=uPrint -luPrint -o bin/test
 	./bin/test
 
